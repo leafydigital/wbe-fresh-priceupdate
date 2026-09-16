@@ -1,0 +1,20 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    box-sizing: border-box;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+  }
+}
+
+@layer utilities {
+  .font-mono-tabular {
+    font-family: theme("fontFamily.mono");
+    font-feature-settings: "tnum";
+  }
+}

@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { formatIstDateTime } from "@/lib/priceCycle";
-import PublicPriceList from "@/components/PublicPriceList";
+import LivePublicPrices from "@/components/LivePublicPrices";
 
 export const revalidate = 0; // always fetch fresh — this is a live price list
 
@@ -19,21 +18,24 @@ async function getPrices(): Promise<PublicPricesResponse> {
 }
 
 /**
- * The public price list is the app's root URL. Validity is entirely
- * cycle-based now (3 PM -> next day 1 PM), never a plain midnight
- * cutoff — see lib/priceCycle.ts. The most recent price is always
- * shown even if today's 3 PM update hasn't happened yet (never-zero
- * requirement); `anyPending` only controls the validity indicator's
- * color, never whether a price is shown.
+ * The public price list is the app's root URL, and the ONLY page in
+ * the whole app that auto-refreshes on a timer (every 60 seconds,
+ * client-side, via components/LivePublicPrices.tsx) — /login,
+ * /admin/*, and /supplier/* are ordinary pages with no polling.
+ *
+ * This file itself stays a Server Component that fetches once for
+ * the initial page load (fast first paint, works with JS disabled),
+ * then hands that data to LivePublicPrices as a seed; all of the
+ * live-refresh behavior lives in that one client component so it's
+ * easy to see, at a glance, that this is the only place it happens.
+ *
+ * Validity is entirely cycle-based (3 PM -> next day 1 PM), never a
+ * plain midnight cutoff — see lib/priceCycle.ts. The most recent
+ * price is always shown even if today's 3 PM update hasn't happened
+ * yet (never-zero requirement).
  */
 export default async function Home() {
   const data = await getPrices();
-  const mostRecentUpdate = data.items
-    .map((i) => i.updatedAt)
-    .filter(Boolean)
-    .sort()
-    .at(-1);
-  const anyPending = data.items.some((i) => i.isUpdatePending);
 
   return (
     <main className="min-h-screen">
@@ -46,35 +48,7 @@ export default async function Home() {
           <div className="text-xs text-inksoft mt-0.5">Fresh fruits &amp; vegetables, wholesale</div>
         </div>
 
-        <div className="px-5 pb-3.5">
-          <div className="bg-white border border-line rounded-card px-4 py-3 flex justify-between items-center gap-3">
-            <div>
-              <div className="text-[11px] text-inksoft">Price updated</div>
-              <div className="text-sm font-bold">
-                {mostRecentUpdate ? formatIstDateTime(new Date(mostRecentUpdate)) : "Not yet priced"}
-              </div>
-            </div>
-            <div
-              className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[13px] font-bold whitespace-nowrap ${
-                anyPending
-                  ? "bg-red-100 text-red-700"
-                  : "bg-red-100 text-red-700"
-              }`}
-            >
-              Valid till {formatIstDateTime(new Date(data.validUntil))}
-            </div>
-          </div>
-        </div>
-
-        <div className="px-5">
-          <PublicPriceList items={data.items} history={data.history} />
-        </div>
-
-        <div className="px-5 pt-4">
-          <div className="text-[11.5px] text-inksoft leading-relaxed border-t border-line pt-3.5">
-            <strong className="font-semibold text-inksoft">Note:</strong> {data.note}
-          </div>
-        </div>
+        <LivePublicPrices initialData={data} />
 
         {/* <div className="text-center pt-6">
           <Link href="/login" className="text-[11.5px] text-inksoft underline">

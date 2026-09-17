@@ -1,6 +1,6 @@
 /**
  * Shared up/down price-direction indicator. Used both in the main
- * price column (components/PublicPriceList.tsx) and inside the
+ * price column (components/LivePublicPrices.tsx) and inside the
  * previous-price comparison in the history sheet
  * (components/PriceHistoryButton.tsx) — extracted here so both
  * places render an identical glyph, size, and color rather than two

@@ -152,6 +152,20 @@ export function isOrderWindowClosed(now: Date): boolean {
   return istParts(now).hour >= ORDER_CUTOFF_HOUR && istParts(now).hour < CYCLE_START_HOUR;
 }
 
+/**
+ * True if two instants fall on the same calendar date in IST —
+ * used for "was this updated today," a plain calendar-day check
+ * (deliberately separate from the 3PM/1PM price-cycle concept:
+ * order quantities are re-entered fresh each calendar day by
+ * admin's own account, not carried across a 3PM boundary the way
+ * prices are).
+ */
+export function isSameIstDate(a: Date, b: Date): boolean {
+  const pa = istParts(a);
+  const pb = istParts(b);
+  return pa.year === pb.year && pa.month === pb.month && pa.day === pb.day;
+}
+
 export function formatIstDateTime(instant: Date): string {
   return instant.toLocaleString("en-IN", {
     timeZone: TIMEZONE,

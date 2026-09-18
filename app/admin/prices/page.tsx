@@ -221,10 +221,12 @@ export default function AdminPricesPage() {
           extraColumn={(row) => (
             <button
               onClick={() => {
+                if (historyFor?.id === row.id) return;
                 const v = vegetables.find((x) => x.id === row.id);
                 if (v) setHistoryFor({ id: v.id, name: v.name, unit: v.unit });
               }}
-              className="w-7 h-7 border border-line rounded-md text-inksoft text-xs"
+              disabled={historyFor?.id === row.id}
+              className="w-7 h-7 border border-line rounded-md text-inksoft text-xs disabled:opacity-50"
               aria-label={`View ${row.label} history`}
             >
               H
@@ -256,11 +258,21 @@ function AdminPriceHistoryModal({
 }) {
   const [rows, setRows] = useState<AdminHistoryRow[] | null>(null);
 
-  if (rows === null) {
-    fetch(`/api/admin/prices/${target.id}/history`)
+  useEffect(() => {
+    setRows(null);
+    const controller = new AbortController();
+    fetch(`/api/admin/prices/${target.id}/history`, { signal: controller.signal })
       .then((r) => r.json())
-      .then((data) => setRows(data.history ?? []));
-  }
+      .then((data) => {
+        setRows(data.history ?? []);
+      })
+      .catch((err) => {
+        if (err.name !== "AbortError") {
+          console.error("Failed to fetch history:", err);
+        }
+      });
+    return () => { controller.abort(); };
+  }, [target.id]);
 
   return (
     <div className="fixed inset-0 bg-black/45 flex items-end justify-center z-50" onClick={onClose}>

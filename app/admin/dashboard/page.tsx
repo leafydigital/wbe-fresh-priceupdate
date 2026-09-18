@@ -57,7 +57,7 @@ export default async function AdminDashboardPage() {
         <div className="text-[15px] font-bold">
           Live price sheet <span className="text-xs text-inksoft font-normal">&middot; common margin {formatRupees(margin)}</span>
         </div>
-        <Link href="/admin/prices" className="text-brand text-xs font-semibold">
+        <Link href="/admin/prices" className="inline-flex items-center px-4 py-2 bg-brand text-white text-xs font-semibold rounded-lg hover:opacity-90 transition-opacity shadow-sm">
           Manage &#8594;
         </Link>
       </div>

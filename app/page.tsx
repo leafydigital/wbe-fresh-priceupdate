@@ -50,11 +50,7 @@ export default async function Home() {
 
         <LivePublicPrices initialData={data} />
 
-        {/* <div className="text-center pt-6">
-          <Link href="/login" className="text-[11.5px] text-inksoft underline">
-            Admin / Supplier login
-          </Link>
-        </div> */}
+
       </div>
     </main>
   );

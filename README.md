@@ -60,11 +60,11 @@ scripts/seed.ts         creates the first admin login + starter vegetables
 
 3. **Copy environment variables.**
    ```
-   cp .env.local.example .env.local
+   cp .env.example .env
    ```
    Fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and
    `SUPABASE_SERVICE_ROLE_KEY` from Project Settings → API in your Supabase
-   dashboard. **Never commit `.env.local` or expose the service role key
+   dashboard. **Never commit `.env` or expose the service role key
    to the browser.**
 
 4. **Install dependencies.**
@@ -78,7 +78,7 @@ scripts/seed.ts         creates the first admin login + starter vegetables
    ```
    This creates an admin login (`admin@wbefresh.com` / `ChangeMe123!` by
    default — override with `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in
-   `.env.local`) and eight starter vegetables. **Change the seeded
+   `.env`) and eight starter vegetables. **Change the seeded
    password after your first login** — there's no forced-reset flow yet,
    so this is a manual step.
 
@@ -342,6 +342,6 @@ A few design choices worth knowing about if you extend this:
 ## Deploying
 
 This is a standard Next.js app — deploys cleanly to Vercel. Set the same
-environment variables from `.env.local` in your hosting provider's
+environment variables from `.env` in your hosting provider's
 dashboard, and set `NEXT_PUBLIC_SITE_URL` to your real domain (used by
 the public prices page to call its own API route server-side).

@@ -2,7 +2,7 @@
  * Seeds a first admin login and a starter set of vegetables.
  * Run with: npm run seed
  *
- * Requires .env.local to have NEXT_PUBLIC_SUPABASE_URL and
+ * Requires .env to have NEXT_PUBLIC_SUPABASE_URL and
  * SUPABASE_SERVICE_ROLE_KEY set (the service role key is required
  * here because creating the admin's auth user needs the admin API —
  * this script is meant to be run once, locally, by a developer).
@@ -10,13 +10,13 @@
 import { createClient } from "@supabase/supabase-js";
 import * as dotenv from "dotenv";
 
-dotenv.config({ path: ".env.local" });
+dotenv.config({ path: ".env" });
 
 const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!url || !serviceKey) {
-  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env.local");
+  console.error("Missing NEXT_PUBLIC_SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in .env");
   process.exit(1);
 }
 

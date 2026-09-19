@@ -41,24 +41,24 @@ export function formatRupees(n: number): string {
  * Callers in admin-facing routes can pass the regular request-scoped
  * client, since admins do have SELECT there.
  */
-type MinimalSupabaseClient = {
-  from: (table: string) => {
-    select: (columns: string) => {
-      eq: (column: string, value: string) => {
-        single: () => Promise<{ data: { value: string } | null; error: unknown }>;
-      };
-    };
-  };
-};
+// type MinimalSupabaseClient = {
+//   from: (table: string) => {
+//     select: (columns: string) => {
+//       eq: (column: string, value: string) => {
+//         single: () => Promise<{ data: { value: string } | null; error: unknown }>;
+//       };
+//     };
+//   };
+// };
 
-export async function getCommonMargin(supabase: MinimalSupabaseClient): Promise<number> {
-  const { data, error } = await supabase
-    .from("app_settings")
-    .select("value")
-    .eq("key", "common_margin")
-    .single();
+// export async function getCommonMargin(supabase: MinimalSupabaseClient): Promise<number> {
+//   const { data, error } = await supabase
+//     .from("app_settings")
+//     .select("value")
+//     .eq("key", "common_margin")
+//     .single();
 
-  if (error || !data) return 0;
-  const parsed = Number(data.value);
-  return Number.isFinite(parsed) ? parsed : 0;
-}
+//   if (error || !data) return 0;
+//   const parsed = Number(data.value);
+//   return Number.isFinite(parsed) ? parsed : 0;
+// }

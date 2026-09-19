@@ -23,10 +23,17 @@
 // and then rename the CLI's "wbe_fresh" key here if it names it
 // something else (older/newer CLI versions have varied on this).
 
+// lib/supabase/database.types.ts
+
 export type UserRole = "ADMIN" | "SUPPLIER";
 export type Status = "ACTIVE" | "DISABLED";
 export type Unit = "KG" | "Piece" | "Box" | "Bundle";
-export type AuditEntityType = "price" | "order_quantity" | "margin" | "vegetable" | "supplier";
+export type AuditEntityType =
+  | "price"
+  | "order_quantity"
+  | "margin"
+  | "vegetable"
+  | "supplier";
 export type AuditAction = "create" | "update" | "delete";
 
 export interface Database {
@@ -42,121 +49,203 @@ export interface Database {
           created_at: string;
           updated_at: string;
         };
-        Insert: Partial<Database["wbe_fresh"]["Tables"]["profiles"]["Row"]> & {
+        Insert: {
           id: string;
           name: string;
           username: string;
           role: UserRole;
+          status?: Status;
+          created_at?: string;
+          updated_at?: string;
         };
-        Update: Partial<Database["wbe_fresh"]["Tables"]["profiles"]["Row"]>;
+        Update: {
+          id?: string;
+          name?: string;
+          username?: string;
+          role?: UserRole;
+          status?: Status;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
+
       suppliers: {
         Row: {
           id: string;
           profile_id: string;
           business_name: string;
           contact_person: string | null;
-          phone: string | null; // db-enforced ^[0-9]{10}$ or null, see migration 0002
+          phone: string | null;
           status: Status;
           created_at: string;
           updated_at: string;
         };
-        Insert: Partial<Database["wbe_fresh"]["Tables"]["suppliers"]["Row"]> & {
+        Insert: {
+          id?: string;
           profile_id: string;
           business_name: string;
+          contact_person?: string | null;
+          phone?: string | null;
+          status?: Status;
+          created_at?: string;
+          updated_at?: string;
         };
-        Update: Partial<Database["wbe_fresh"]["Tables"]["suppliers"]["Row"]>;
+        Update: {
+          id?: string;
+          profile_id?: string;
+          business_name?: string;
+          contact_person?: string | null;
+          phone?: string | null;
+          status?: Status;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
+
       vegetables: {
         Row: {
           id: string;
           name: string;
           unit: Unit;
-          status: Status; // DISABLED doubles as "removed/archived" — see requirement 10
+          status: Status;
           created_at: string;
           updated_at: string;
         };
-        Insert: Partial<Database["wbe_fresh"]["Tables"]["vegetables"]["Row"]> & {
+        Insert: {
+          id?: string;
           name: string;
           unit: Unit;
+          status?: Status;
+          created_at?: string;
+          updated_at?: string;
         };
-        Update: Partial<Database["wbe_fresh"]["Tables"]["vegetables"]["Row"]>;
+        Update: {
+          id?: string;
+          name?: string;
+          unit?: Unit;
+          status?: Status;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
       };
+
       daily_prices: {
         Row: {
           id: string;
           vegetable_id: string;
           updated_price: number;
-          // margin removed in migration 0002 — margin is global now,
-          // stored in app_settings, not per price row.
-          final_price: number; // application-computed, not DB-generated — see migration 0002 comment
-          price_date: string; // inert since migration 0003 — kept for backward compat, no longer load-bearing
-          cycle_start: string; // the 3 PM IST instant this row's price cycle began — see migration 0003 / lib/priceCycle.ts
+          final_price: number;
+          price_date: string;
+          cycle_start: string;
           updated_at: string;
           updated_by: string | null;
         };
+
         Insert: {
+          id?: string;
           vegetable_id: string;
           updated_price?: number;
           final_price?: number;
           price_date?: string;
           cycle_start: string;
+          updated_at?: string;
           updated_by?: string | null;
         };
-        Update: Partial<Database["wbe_fresh"]["Tables"]["daily_prices"]["Insert"]>;
+
+        Update: {
+          id?: string;
+          vegetable_id?: string;
+          updated_price?: number;
+          final_price?: number;
+          price_date?: string;
+          cycle_start?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+
+        Relationships: [];
       };
+
       daily_order_quantities: {
         Row: {
           id: string;
           vegetable_id: string;
           quantity: number;
           unit: string;
-          order_date: string; // inert since migration 0003 — kept for backward compat
-          cutoff_at: string; // the 1 PM IST instant this order-collection window closes — see migration 0003
+          order_date: string;
+          cutoff_at: string;
           updated_at: string;
           updated_by: string | null;
         };
+
         Insert: {
+          id?: string;
           vegetable_id: string;
           quantity: number;
           unit: string;
           order_date?: string;
           cutoff_at: string;
+          updated_at?: string;
           updated_by?: string | null;
         };
-        Update: Partial<Database["wbe_fresh"]["Tables"]["daily_order_quantities"]["Insert"]>;
+
+        Update: {
+          id?: string;
+          vegetable_id?: string;
+          quantity?: number;
+          unit?: string;
+          order_date?: string;
+          cutoff_at?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+
+        Relationships: [];
       };
+
       price_history: {
         Row: {
           id: string;
           vegetable_id: string;
           updated_price: number;
-          // margin removed in migration 0002
           final_price: number;
-          price_date: string; // inert since migration 0003
-          cycle_start: string; // see migration 0003
+          price_date: string;
+          cycle_start: string;
           recorded_at: string;
           updated_by: string | null;
           updated_by_role: UserRole | null;
         };
-        // This table is genuinely insert-only via the
-        // daily_prices_history trigger — enforced by Postgres RLS
-        // (no INSERT/UPDATE policy for the app's roles), not by this
-        // type. A real shape is used here anyway (rather than
-        // `never`) purely to stay consistent/safe with supabase-js's
-        // generic resolution; the app never actually calls
-        // .insert()/.update() on this table.
+
         Insert: {
+          id?: string;
           vegetable_id: string;
           updated_price: number;
           final_price: number;
           price_date?: string;
           cycle_start: string;
+          recorded_at?: string;
           updated_by?: string | null;
           updated_by_role?: UserRole | null;
         };
-        Update: Partial<Database["wbe_fresh"]["Tables"]["price_history"]["Insert"]>;
+
+        Update: {
+          id?: string;
+          vegetable_id?: string;
+          updated_price?: number;
+          final_price?: number;
+          price_date?: string;
+          cycle_start?: string;
+          recorded_at?: string;
+          updated_by?: string | null;
+          updated_by_role?: UserRole | null;
+        };
+
+        Relationships: [];
       };
+
       app_settings: {
         Row: {
           key: string;
@@ -164,9 +253,24 @@ export interface Database {
           updated_at: string;
           updated_by: string | null;
         };
-        Insert: { key: string; value: string; updated_by?: string | null };
-        Update: Partial<Database["wbe_fresh"]["Tables"]["app_settings"]["Insert"]>;
+
+        Insert: {
+          key: string;
+          value: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+
+        Update: {
+          key?: string;
+          value?: string;
+          updated_at?: string;
+          updated_by?: string | null;
+        };
+
+        Relationships: [];
       };
+
       audit_logs: {
         Row: {
           id: string;
@@ -180,7 +284,9 @@ export interface Database {
           changed_by_role: UserRole;
           changed_at: string;
         };
+
         Insert: {
+          id?: string;
           entity_type: AuditEntityType;
           entity_id?: string | null;
           action: AuditAction;
@@ -189,16 +295,27 @@ export interface Database {
           new_value?: string | null;
           changed_by: string;
           changed_by_role: UserRole;
+          changed_at?: string;
         };
-        // Real shape here too, same reasoning as price_history above
-        // — this table is insert-only via Postgres RLS, not via this
-        // TypeScript type.
-        Update: Partial<Database["wbe_fresh"]["Tables"]["audit_logs"]["Insert"]>;
+
+        Update: {
+          id?: string;
+          entity_type?: AuditEntityType;
+          entity_id?: string | null;
+          action?: AuditAction;
+          field_name?: string | null;
+          old_value?: string | null;
+          new_value?: string | null;
+          changed_by?: string;
+          changed_by_role?: UserRole;
+          changed_at?: string;
+        };
+
+        Relationships: [];
       };
     };
+
     Views: {
-      // Supplier-safe read surfaces — omit margin (now global/hidden
-      // in app_settings) and, historically, final_price breakdowns.
       supplier_prices_view: {
         Row: {
           vegetable_id: string;
@@ -207,7 +324,9 @@ export interface Database {
           cycle_start: string;
           updated_at: string;
         };
+        Relationships: [];
       };
+
       supplier_price_history_view: {
         Row: {
           vegetable_id: string;
@@ -218,7 +337,19 @@ export interface Database {
           updated_by: string | null;
           updated_by_role: UserRole | null;
         };
+        Relationships: [];
       };
     };
+
+    Functions: Record<string, never>;
+    Enums: {
+      user_role: UserRole;
+      status: Status;
+      unit: Unit;
+      audit_entity_type: AuditEntityType;
+      audit_action: AuditAction;
+    };
+
+    CompositeTypes: Record<string, never>;
   };
 }

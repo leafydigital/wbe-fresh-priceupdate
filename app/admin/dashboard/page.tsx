@@ -1,8 +1,26 @@
+import type { Database } from "@/lib/supabase/database.types";
 import { createClient } from "@/lib/supabase/server";
-import { getCommonMargin, formatRupees } from "@/lib/pricing";
+import { formatRupees } from "@/lib/pricing";
+import { getCommonMargin } from "@/lib/pricing.server";
 import { getCurrentCycle, formatIstDateTime } from "@/lib/priceCycle";
 import PriceSheetPreview from "@/components/PriceSheetPreview";
 import Link from "next/link";
+
+
+type VegetableRow = Pick<
+  Database["wbe_fresh"]["Tables"]["vegetables"]["Row"],
+  "id" | "name" | "unit" | "status"
+>;
+
+type PriceRow = Pick<
+  Database["wbe_fresh"]["Tables"]["daily_prices"]["Row"],
+  "vegetable_id" | "updated_price" | "final_price" | "cycle_start"
+>;
+
+type SupplierRow = Pick<
+  Database["wbe_fresh"]["Tables"]["suppliers"]["Row"],
+  "id" | "status"
+>;
 
 /**
  * Simplified per spec: exactly two cards (Active Suppliers, Total
@@ -14,21 +32,60 @@ export default async function AdminDashboardPage() {
   const supabase = createClient();
   const currentCycle = getCurrentCycle(new Date());
 
-  const [{ data: vegetables }, { data: allPrices }, { data: suppliers }] = await Promise.all([
-    supabase.from("vegetables").select("id, name, unit, status").eq("status", "ACTIVE").order("name"),
-    supabase.from("daily_prices").select("vegetable_id, updated_price, final_price, cycle_start").order("cycle_start", { ascending: false }),
-    supabase.from("suppliers").select("id, status"),
-  ]);
+  // const [{ data: vegetables }, { data: allPrices }, { data: suppliers }] = await Promise.all([
+  //   supabase.from("vegetables").select("id, name, unit, status").eq("status", "ACTIVE").order("name"),
+  //   supabase.from("daily_prices").select("vegetable_id, updated_price, final_price, cycle_start").order("cycle_start", { ascending: false }),
+  //   supabase.from("suppliers").select("id, status"),
+  // ]);
 
-  const veg = vegetables ?? [];
-  const margin = await getCommonMargin(supabase);
-  const activeSuppliers = (suppliers ?? []).filter((s) => s.status === "ACTIVE").length;
+  const [{ data: vegetables }, { data: allPrices }, { data: suppliers }] =
+    await Promise.all([
+      supabase
+        .from("vegetables")
+        .select("id, name, unit, status")
+        .eq("status", "ACTIVE")
+        .order("name"),
 
-  const latestByVeg = new Map<string, (typeof allPrices)[number]>();
-  for (const row of allPrices ?? []) {
-    if (!latestByVeg.has(row.vegetable_id)) latestByVeg.set(row.vegetable_id, row);
+      supabase
+        .from("daily_prices")
+        .select(
+          "vegetable_id, updated_price, final_price, cycle_start"
+        )
+        .order("cycle_start", { ascending: false }),
+
+      supabase
+        .from("suppliers")
+        .select("id, status"),
+    ]);
+
+  const veg = (vegetables ?? []) as VegetableRow[];
+  const priceRows = (allPrices ?? []) as PriceRow[];
+  const supplierRows = (suppliers ?? []) as SupplierRow[];
+
+  const margin = await getCommonMargin();
+
+  const activeSuppliers = supplierRows.filter(
+    (s) => s.status === "ACTIVE"
+  ).length;
+
+  // const latestByVeg = new Map<string, (typeof allPrices)[number]>();
+  // for (const row of allPrices ?? []) {
+  //   if (!latestByVeg.has(row.vegetable_id)) latestByVeg.set(row.vegetable_id, row);
+  // }
+  // const sheet = veg.map((v) => ({ vegetable: v, price: latestByVeg.get(v.id) ?? null }));
+
+  const latestByVeg = new Map<string, PriceRow>();
+
+  for (const row of priceRows) {
+    if (!latestByVeg.has(row.vegetable_id)) {
+      latestByVeg.set(row.vegetable_id, row);
+    }
   }
-  const sheet = veg.map((v) => ({ vegetable: v, price: latestByVeg.get(v.id) ?? null }));
+
+  const sheet = veg.map((v) => ({
+    vegetable: v,
+    price: latestByVeg.get(v.id) ?? null,
+  }));
 
   const cards = [
     { label: "Active Suppliers", value: activeSuppliers },
